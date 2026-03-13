@@ -28,11 +28,14 @@ export default function BookingsScreen() {
     fetch(`${API_URL}/bookings`)
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          setBookings(data.data);
+        if (data?.success) {
+          setBookings(data.data || []);
         }
       })
-      .catch(err => console.error("Error fetching bookings:", err));
+      .catch(err => {
+        console.error("Error fetching bookings:", err);
+        setBookings([]);
+      });
   }, []);
 
   const renderBookingCard = (b: Booking) => {

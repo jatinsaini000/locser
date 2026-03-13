@@ -15,13 +15,16 @@ export default function DiscoveryFeedScreen() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API_URL}/categories`).then(r => r.json()),
-      fetch(`${API_URL}/services`).then(r => r.json())
+      fetch(`${API_URL}/categories`).then(r => r.json()).catch(() => ({ data: [] })),
+      fetch(`${API_URL}/services`).then(r => r.json()).catch(() => ({ data: [] }))
     ]).then(([catRes, servRes]) => {
-      setCategories(catRes.data);
-      setServices(servRes.data);
+      setCategories(catRes?.data || []);
+      setServices(servRes?.data || []);
       setLoading(false);
-    }).catch(console.error);
+    }).catch(err => {
+      console.error(err);
+      setLoading(false);
+    });
   }, []);
 
   return (

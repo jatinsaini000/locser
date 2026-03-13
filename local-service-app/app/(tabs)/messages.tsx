@@ -24,8 +24,11 @@ export default function MessagesScreen() {
   useEffect(() => {
     fetch(`${API_URL}/messages`)
       .then(r => r.json())
-      .then(res => setMessages(res.data || []))
-      .catch(console.error);
+      .then(res => setMessages(res?.data || []))
+      .catch(err => {
+        console.error(err);
+        setMessages([]);
+      });
   }, []);
 
   return (
