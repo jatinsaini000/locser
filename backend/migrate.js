@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const { Client } = require('pg');
+require('dotenv').config();
 
 // REPLACE THIS with your actual connection string or set it in your environment
 const supabaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:[YOUR-PASSWORD]@db.ihnchqsimkajzaqkirds.supabase.co:5432/postgres';

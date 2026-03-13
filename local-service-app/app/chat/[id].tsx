@@ -3,7 +3,7 @@ import { View, Text, Image, TouchableOpacity, ScrollView, SafeAreaView, StatusBa
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 
-import { API_URL } from '../constants/Api';
+import { API_URL } from '../../constants/Api';
 
 type MessageType = {
   id: string;
