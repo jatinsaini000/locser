@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#1754cf",
+              "background-light": "#f6f6f8",
+              "background-dark": "#111621",
+            },
+            fontFamily: {
+              "display": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<title>Inbox - Service Marketplace</title>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="max-w-2xl mx-auto bg-white dark:bg-slate-900 min-h-screen flex flex-col shadow-sm">
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">menu</span>
+<h1 class="text-xl font-bold tracking-tight">Messages</h1>
+</div>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex px-4 gap-6">
+<a class="pb-3 border-b-2 border-primary text-primary font-semibold text-sm" href="#">
+                    All Messages
+                </a>
+<a class="pb-3 border-b-2 border-transparent text-slate-500 dark:text-slate-400 font-medium text-sm hover:text-slate-700 dark:hover:text-slate-200" href="#">
+                    Unread
+                </a>
+<a class="pb-3 border-b-2 border-transparent text-slate-500 dark:text-slate-400 font-medium text-sm hover:text-slate-700 dark:hover:text-slate-200" href="#">
+                    Archived
+                </a>
+</div>
+</header>
+<!-- Message List -->
+<main class="flex-1 overflow-y-auto">
+<!-- Message Item: Active/Unread -->
+<div class="flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-100 dark:border-slate-800/50">
+<div class="relative flex-shrink-0">
+<img alt="Provider profile" class="w-14 h-14 rounded-full object-cover" data-alt="Professional plumber in work uniform smiling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4OlGG6XtaNxD8OC3ane8Y6w4wlhQUGM8Yd_d0uCnbJAaHeF4nTRGKCBhNM55uf3q0rK3AvfevCFluA3AYnjmJy1nw-j4g1khWdhCN00BPYP1vROtS64k5PKnfVNR9-j7Zu0NbQE4aW7XYMsAE12eJBlvl67V4GcNxEYI5S6hoGbPnfH_iYP8QXjTKbuP0hzA3MdCB3D6UdYw13tnmTbfHCmw77NrT2hdDLjGoQb61pjo35KdSd8e1K4E4pDSD0ZR9FnfuiktZBy4"/>
+<div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline mb-0.5">
+<h3 class="font-bold text-slate-900 dark:text-white truncate">John's Expert Plumbing</h3>
+<span class="text-xs font-semibold text-primary">10:30 AM</span>
+</div>
+<div class="flex justify-between items-center">
+<p class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">I can come over at 2 PM tomorrow to fix the leak.</p>
+<span class="ml-2 w-5 h-5 bg-primary text-white text-[10px] flex items-center justify-center rounded-full font-bold">2</span>
+</div>
+</div>
+</div>
+<!-- Message Item: Read -->
+<div class="flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-100 dark:border-slate-800/50">
+<div class="relative flex-shrink-0">
+<img alt="Provider profile" class="w-14 h-14 rounded-full object-cover grayscale-[0.3]" data-alt="Professional house cleaner with cleaning supplies" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSgPVMxodmnTAy6akAz9gnV6Bfm8m2Qz3auIA0JnjFbRXDypF1ctWS5-2o8-srZvfvkvp1fy-Y3xmJBsm5Ec7Lkzg7D3CrJWRYdrKY5NUVUDlfnYfDg2chFFWYa8ilgkBB80zlEjKSPM6nCWLgjveqXYpM55pAFTzKicybOuPd5Qy152rbEjYhbOgOcdgDkeY_nsTdGtgTdizc_g9m3zLKq8wtiUNy8pWjP_GEUGzYDvwU1XsgbD0T2CRgvpPEN7uIpXO9pxhgvVI"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline mb-0.5">
+<h3 class="font-medium text-slate-900 dark:text-white truncate">Clean &amp; Sparkle Co.</h3>
+<span class="text-xs text-slate-500 dark:text-slate-400">Yesterday</span>
+</div>
+<div class="flex justify-between items-center">
+<p class="text-sm text-slate-500 dark:text-slate-400 truncate">Your booking for Friday is confirmed! See you then.</p>
+</div>
+</div>
+</div>
+<!-- Message Item: Read -->
+<div class="flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-100 dark:border-slate-800/50">
+<div class="relative flex-shrink-0">
+<div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-2xl">electric_bolt</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline mb-0.5">
+<h3 class="font-medium text-slate-900 dark:text-white truncate">Sparky Electricians</h3>
+<span class="text-xs text-slate-500 dark:text-slate-400">Tue</span>
+</div>
+<div class="flex justify-between items-center">
+<p class="text-sm text-slate-500 dark:text-slate-400 truncate">Thanks for the review! Let us know if you need anything else.</p>
+</div>
+</div>
+</div>
+<!-- Message Item: Read -->
+<div class="flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-100 dark:border-slate-800/50">
+<div class="relative flex-shrink-0">
+<img alt="Provider profile" class="w-14 h-14 rounded-full object-cover" data-alt="Woman landscape designer in a garden" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxCGcpr3lVAurT6HnS4AfKMGC_I4mRZexdQ9ICbpgwseQm6UqSKCBVbLrsQDMkJAekXozOQqf5HsOzSwbWm1U9lhuKEb4rsHm-cbh3OyjnfZFA7GZYTIy8z_M5q5iVcZ1u09P7QbHZnE6WtHEdLWc_9dSXZXiaHXtvDCDnLVvFJhXFcjD91nz4yiJXuHp87R4ngSp-LhtEQaPnA36GNhDZbD9PyfqA7l8AgrJYDwBRxHZSQvUVWSS_RjzSf4eNt9vbS5qV5bebWzg"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline mb-0.5">
+<h3 class="font-medium text-slate-900 dark:text-white truncate">Green Thumb Gardens</h3>
+<span class="text-xs text-slate-500 dark:text-slate-400">Oct 12</span>
+</div>
+<div class="flex justify-between items-center">
+<p class="text-sm text-slate-500 dark:text-slate-400 truncate">I've attached the quote for the backyard redesign project.</p>
+<span class="material-symbols-outlined text-slate-400 text-sm">attach_file</span>
+</div>
+</div>
+</div>
+<!-- Message Item: Read -->
+<div class="flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-100 dark:border-slate-800/50">
+<div class="relative flex-shrink-0">
+<img alt="Provider profile" class="w-14 h-14 rounded-full object-cover" data-alt="Man wearing carpenter apron in workshop" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsXRlKwDp2-sntIJCfTlGpfzB-Ah4EztKs9IoEH5QPDbzoaqyx3N6GC_DjCfJrHSm6y-Yy4jqDGr6eUx6HIr7qnMOeEQw8CjV1OTsU8O9JdGVaOGMHCeD95OupqxBNn1JqOa61w0860FmWIEKQ1LrPRqO8dDhVszsyV4dbdOTuzY8db5Xueb9yXdStxUQRQi30IMgH0J_nGbIxIDPHJleNYZGJYHzWpWiKm9SEmCgZkUVy_xAgU_1pOP-xuFgwE0G7PoRSWdPw5eA"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline mb-0.5">
+<h3 class="font-medium text-slate-900 dark:text-white truncate">Master Carpentry</h3>
+<span class="text-xs text-slate-500 dark:text-slate-400">Oct 08</span>
+</div>
+<div class="flex justify-between items-center">
+<p class="text-sm text-slate-500 dark:text-slate-400 truncate">The custom shelving is ready for delivery.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation -->
+<nav class="sticky bottom-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2">
+<div class="flex justify-around items-center max-w-md mx-auto">
+<a class="flex flex-col items-center gap-1 p-2 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="text-[10px] font-medium uppercase tracking-wider">Explore</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-[10px] font-medium uppercase tracking-wider">Bookings</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-primary" href="#">
+<div class="relative">
+<span class="material-symbols-outlined fill-1">chat_bubble</span>
+<div class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-wider">Inbox</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium uppercase tracking-wider">Profile</span>
+</a>
+</div>
+</nav>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-lg shadow-primary/30 flex items-center justify-center hover:bg-primary/90 transition-all active:scale-95">
+<span class="material-symbols-outlined text-2xl">edit</span>
+</button>
+</div>
+</body></html>

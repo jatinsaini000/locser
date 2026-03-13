@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>User Profile - Service Marketplace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1754cf",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="max-w-md mx-auto min-h-screen flex flex-col bg-white dark:bg-slate-900 shadow-xl">
+<header class="flex items-center p-4 justify-between border-b border-slate-100 dark:border-slate-800 sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-10">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-300">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold">Profile</h1>
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-300">settings</span>
+</button>
+</header>
+<main class="flex-1 overflow-y-auto">
+<div class="flex flex-col items-center py-8 px-4 bg-gradient-to-b from-primary/5 to-transparent">
+<div class="relative">
+<div class="size-28 rounded-full border-4 border-white dark:border-slate-800 shadow-lg bg-cover bg-center overflow-hidden" data-alt="Professional male user profile picture smiling" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBf54K6rsGQsIrwxoMBkfwgXZXLvOCytMj7eyFD1mbwAUzYPTUotDJyfnzz-RLNPce-VuzBYK7FLOQCFSMad2TBn0_7ooJvwvpzgTQ2pZZlYgPQzXwNxPUs-uwI3Hn1TUvVkNG8-uk7K587wTckkGeD5gQLfA1ySgH3A-703ldB314OSR7D1ci8xf6abqenIVucYJoQ11LjHmUlg8CUUYozum_uFdsuz2s5_OXNZH_w0POb5TWDksTL6R1NGZzIoqNcl2iUjDAL6-U')">
+</div>
+<button class="absolute bottom-1 right-1 size-8 bg-primary text-white rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-md">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+</div>
+<h2 class="mt-4 text-xl font-bold">Alex Johnson</h2>
+<div class="flex items-center gap-1 text-slate-500 dark:text-slate-400 mt-1">
+<span class="material-symbols-outlined text-base">location_on</span>
+<span class="text-sm">San Francisco, CA</span>
+</div>
+</div>
+<div class="px-4 py-2">
+<div class="bg-primary/10 dark:bg-primary/20 rounded-xl p-4 flex items-center justify-between mb-6">
+<div class="flex flex-col">
+<span class="text-primary font-bold">Switch to Provider Mode</span>
+<span class="text-xs text-primary/80">Start earning by offering services</span>
+</div>
+<span class="material-symbols-outlined text-primary">storefront</span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center gap-4 py-4 px-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-800/50">
+<div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">calendar_today</span>
+</div>
+<div class="flex-1">
+<p class="font-medium">My Bookings</p>
+<p class="text-xs text-slate-500">View and manage your service orders</p>
+</div>
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+<div class="flex items-center gap-4 py-4 px-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-800/50">
+<div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div class="flex-1">
+<p class="font-medium">Payment Methods</p>
+<p class="text-xs text-slate-500">Manage cards and digital wallets</p>
+</div>
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+<div class="flex items-center gap-4 py-4 px-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-800/50">
+<div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">map</span>
+</div>
+<div class="flex-1">
+<p class="font-medium">Addresses</p>
+<p class="text-xs text-slate-500">Manage your saved locations</p>
+</div>
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+<div class="flex items-center gap-4 py-4 px-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-800/50">
+<div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">help_center</span>
+</div>
+<div class="flex-1">
+<p class="font-medium">Help &amp; Support</p>
+<p class="text-xs text-slate-500">FAQ, contact us, and support tickets</p>
+</div>
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+<div class="flex items-center gap-4 py-4 px-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg cursor-pointer transition-colors">
+<div class="size-10 rounded-lg bg-red-100 dark:bg-red-900/20 flex items-center justify-center text-red-600">
+<span class="material-symbols-outlined">logout</span>
+</div>
+<div class="flex-1">
+<p class="font-medium text-red-600">Sign Out</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="mt-auto border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-2 pb-6 pt-2">
+<div class="flex justify-around items-center">
+<a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors py-2 px-4 rounded-xl" href="#">
+<span class="material-symbols-outlined">search</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Explore</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors py-2 px-4 rounded-xl" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Bookings</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors py-2 px-4 rounded-xl" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Messages</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary py-2 px-4 rounded-xl bg-primary/5" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Profile</p>
+</a>
+</div>
+</footer>
+</div>
+</body></html>
