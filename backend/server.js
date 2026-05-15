@@ -1,11 +1,18 @@
 const express = require('express');
-const { Pool } = require('pg');
+const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const path = require('path');
 const { OAuth2Client } = require('google-auth-library');
 require('dotenv').config();
+
+const User = require('./models/User');
+const Service = require('./models/Service');
+const Booking = require('./models/Booking');
+const Category = require('./models/Category');
+const Message = require('./models/Message');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123';
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -13,12 +20,9 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const app = express();
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
-const useLocalDb = process.env.USE_LOCAL_DB === 'true';
-const corsOrigin = process.env.CORS_ORIGIN;
-const dbSslEnabled = process.env.DB_SSL
-  ? process.env.DB_SSL === 'true'
-  : NODE_ENV === 'production';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/locser';
 
+const corsOrigin = process.env.CORS_ORIGIN;
 const corsOptions = corsOrigin
   ? { origin: corsOrigin.split(',').map(origin => origin.trim()) }
   : {};
@@ -40,82 +44,25 @@ function resolveServiceImageUrl(title, rawUrl) {
 }
 
 // Serve built front‑end (React/Vite) from ./website/dist
-const path = require('path');
 app.use(express.static(path.join(__dirname, 'website', 'dist')));
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api')) return next(); // let API routes handle themselves
+  if (req.path.startsWith('/api')) return next();
   const indexPath = path.resolve(__dirname, 'website', 'dist', 'index.html');
   res.sendFile(indexPath, err => {
     if (err) {
+      // In dev, we might not have the build folder yet
+      if (NODE_ENV === 'development') return next();
       console.error('Failed to send index.html:', err);
       res.status(500).end();
     }
   });
 });
 
-// Database connection setup
-let pool;
+// MongoDB connection
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('MongoDB connected successfully'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
-if (useLocalDb) {
-  const sqlite3 = require('sqlite3').verbose();
-  const db = new sqlite3.Database('./database.sqlite');
-  
-  pool = {
-    query: (text, params) => {
-      // Handle callback-style invocation for test connection
-      if (typeof params === 'function') {
-        const callback = params;
-        if (text === 'SELECT NOW()') {
-          return callback(null, { rows: [{ now: new Date().toISOString() }] });
-        }
-        params = [];
-      }
-      
-      return new Promise((resolve, reject) => {
-        let finalText = text.replace(/\$\d+/g, '?').replace(/ILIKE/gi, 'LIKE');
-        const isInsertReturning = finalText.includes('RETURNING');
-        if (isInsertReturning) {
-          finalText = finalText.replace(/RETURNING.*/gi, '');
-        }
-        
-        const isSelect = finalText.trim().toUpperCase().startsWith('SELECT');
-        const method = isSelect ? 'all' : 'run';
-        
-        db[method](finalText, params || [], function(err, rows) {
-          if (err) {
-            reject(err);
-          } else {
-            if (method === 'run') {
-              resolve({ rows: isInsertReturning ? [{ id: this.lastID }] : [], rowCount: this.changes });
-            } else {
-              resolve({ rows: rows || [] });
-            }
-          }
-        });
-      });
-    }
-  };
-  console.log('Using Local SQLite database.');
-} else {
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is required when USE_LOCAL_DB is false.');
-  }
-
-  pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: dbSslEnabled ? { rejectUnauthorized: false } : false
-  });
-  console.log('Using Remote PostgreSQL database.');
-}
-
-// Test connection
-pool.query('SELECT NOW()', (err, res) => {
-  if (err) {
-    console.error('Error connecting to Database:', err.message);
-  } else {
-    console.log('Database connected at:', res.rows[0].now);
-  }
-});
 
 // Auth Middleware
 const authenticateToken = (req, res, next) => {
@@ -135,18 +82,22 @@ app.post('/api/auth/signup', async (req, res) => {
   const { fullName, email, password, role } = req.body;
   if (!fullName || !email || !password) return res.status(400).json({ error: 'Missing required fields' });
   try {
-    const check = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
-    if (check.rows.length > 0) return res.status(409).json({ error: 'Email already exists' });
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(409).json({ error: 'Email already exists' });
     
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
-    const newId = crypto.randomUUID();
     
-    await pool.query(
-      "INSERT INTO users (id, fullname, email, password_hash, role) VALUES ($1, $2, $3, $4, $5)",
-      [newId, fullName, email, hash, role || 'consumer']
-    );
-    const user = { id: newId, fullname: fullName, email, role: role || 'consumer' };
+    const newUser = new User({
+      fullname: fullName,
+      email,
+      password_hash: hash,
+      role: role || 'consumer'
+    });
+    
+    await newUser.save();
+    
+    const user = { id: newUser._id, fullname: newUser.fullname, email: newUser.email, role: newUser.role };
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role, fullname: user.fullname }, JWT_SECRET, { expiresIn: '7d' });
     
     res.json({ success: true, token, user });
@@ -159,16 +110,15 @@ app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Missing credentials' });
   try {
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-    if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid email or password' });
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ error: 'Invalid email or password' });
     
-    const user = result.rows[0];
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) return res.status(401).json({ error: 'Invalid email or password' });
     
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role, fullname: user.fullname }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id, email: user.email, role: user.role, fullname: user.fullname }, JWT_SECRET, { expiresIn: '7d' });
     
-    res.json({ success: true, token, user: { id: user.id, fullname: user.fullname, email: user.email, role: user.role, avatar_url: user.avatar_url } });
+    res.json({ success: true, token, user: { id: user._id, fullname: user.fullname, email: user.email, role: user.role, avatar_url: user.avatar_url } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -187,28 +137,28 @@ app.post('/api/auth/google', async (req, res) => {
     const { email, name, picture } = payload;
 
     // Check if user exists
-    let result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-    let user;
+    let user = await User.findOne({ email });
 
-    if (result.rows.length === 0) {
+    if (!user) {
       // Create new user
-      const newId = crypto.randomUUID();
-      await pool.query(
-        "INSERT INTO users (id, fullname, email, password_hash, role, avatar_url) VALUES ($1, $2, $3, $4, $5, $6)",
-        [newId, name, email, 'google-auth', 'consumer', picture]
-      );
-      user = { id: newId, fullname: name, email, role: 'consumer', avatar_url: picture };
+      user = new User({
+        fullname: name,
+        email,
+        password_hash: 'google-auth',
+        role: 'consumer',
+        avatar_url: picture
+      });
+      await user.save();
     } else {
-      user = result.rows[0];
       // Update avatar if changed
       if (user.avatar_url !== picture) {
-        await pool.query("UPDATE users SET avatar_url = $1 WHERE id = $2", [picture, user.id]);
         user.avatar_url = picture;
+        await user.save();
       }
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role, fullname: user.fullname }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ success: true, token, user: { id: user.id, fullname: user.fullname, email: user.email, role: user.role, avatar_url: user.avatar_url } });
+    const token = jwt.sign({ id: user._id, email: user.email, role: user.role, fullname: user.fullname }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ success: true, token, user: { id: user._id, fullname: user.fullname, email: user.email, role: user.role, avatar_url: user.avatar_url } });
   } catch (err) {
     console.error('Google Auth Error:', err);
     res.status(401).json({ error: 'Invalid Google token' });
@@ -217,19 +167,21 @@ app.post('/api/auth/google', async (req, res) => {
 
 app.get('/api/auth/me', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query("SELECT id, fullname, email, role, avatar_url FROM users WHERE id = $1", [req.user.id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
-    res.json({ success: true, user: result.rows[0] });
+    const user = await User.findById(req.user.id).select('fullname email role avatar_url');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ success: true, user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// API: Get Categories
+// API: Health Check
 app.get('/api/health', async (req, res) => {
   try {
-    await pool.query('SELECT 1');
-    res.json({ status: 'ok', env: NODE_ENV });
+    // Check MongoDB connection state
+    const dbState = mongoose.connection.readyState;
+    const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+    res.json({ status: states[dbState] || 'unknown', env: NODE_ENV });
   } catch (err) {
     res.status(500).json({ status: 'error', error: err.message });
   }
@@ -237,8 +189,8 @@ app.get('/api/health', async (req, res) => {
 
 app.get('/api/categories', async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM categories");
-    res.json({ data: result.rows });
+    const categories = await Category.find();
+    res.json({ data: categories });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -247,8 +199,8 @@ app.get('/api/categories', async (req, res) => {
 // API: Get Messages
 app.get('/api/messages', async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM messages");
-    res.json({ data: result.rows }); // Boolean handles itself in PG
+    const messages = await Message.find();
+    res.json({ data: messages });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -258,9 +210,9 @@ app.get('/api/messages', async (req, res) => {
 app.get('/api/messages/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query("SELECT * FROM messages WHERE id = $1", [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: "Conversation not found" });
-    res.json({ data: result.rows[0] });
+    const message = await Message.findOne({ id });
+    if (!message) return res.status(404).json({ error: "Conversation not found" });
+    res.json({ data: message });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -272,12 +224,18 @@ app.post('/api/messages', async (req, res) => {
   if (!id || !senderName) return res.status(400).json({ error: "Missing required chat details" });
 
   try {
-    const check = await pool.query("SELECT id FROM messages WHERE id = $1", [id]);
-    if (check.rows.length === 0) {
-      await pool.query(
-        "INSERT INTO messages (id, senderName, senderAvatar, lastMessage, timestamp, unreadCount, isOnline) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-        [id, senderName, senderAvatar, lastMessage || 'Chat started', timestamp || new Date().toISOString(), 0, true]
-      );
+    let message = await Message.findOne({ id });
+    if (!message) {
+      message = new Message({
+        id,
+        senderName,
+        senderAvatar,
+        lastMessage: lastMessage || 'Chat started',
+        timestamp: timestamp || new Date().toISOString(),
+        unreadCount: 0,
+        isOnline: true
+      });
+      await message.save();
     }
     res.json({ success: true, data: { id } });
   } catch (err) {
@@ -289,8 +247,8 @@ app.post('/api/messages', async (req, res) => {
 app.delete('/api/messages/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query("DELETE FROM messages WHERE id = $1", [id]);
-    if (result.rowCount === 0) return res.status(404).json({ error: "Conversation not found" });
+    const result = await Message.deleteOne({ id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: "Conversation not found" });
     res.json({ success: true, message: "Conversation deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -300,8 +258,8 @@ app.delete('/api/messages/:id', async (req, res) => {
 // API: Get Profile
 app.get('/api/profile', async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM profile WHERE id = 'u1'");
-    res.json({ data: result.rows[0] });
+    const user = await User.findOne({ isProvider: true }); // Fallback or mock
+    res.json({ data: user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -311,49 +269,43 @@ app.get('/api/profile', async (req, res) => {
 app.get('/api/services', async (req, res) => {
   const { categoryId, query: searchQuery } = req.query;
   
-  let queryStr = "SELECT * FROM services";
-  let params = [];
-  let conditions = [];
+  let filter = {};
   
   if (categoryId) {
-    conditions.push("categoryId = $" + (params.length + 1));
-    params.push(categoryId);
+    filter.categoryId = categoryId;
   }
   
   if (searchQuery) {
-    conditions.push("(title ILIKE $" + (params.length + 1) + " OR description ILIKE $" + (params.length + 2) + " OR providerName ILIKE $" + (params.length + 3) + ")");
-    const likeQ = `%${searchQuery}%`;
-    params.push(likeQ, likeQ, likeQ);
-  }
-
-  if (conditions.length > 0) {
-    queryStr += " WHERE " + conditions.join(" AND ");
+    filter.$or = [
+      { title: { $regex: searchQuery, $options: 'i' } },
+      { description: { $regex: searchQuery, $options: 'i' } },
+      { providerName: { $regex: searchQuery, $options: 'i' } }
+    ];
   }
 
   try {
-    const result = await pool.query(queryStr, params);
-    const pick = (row, camel, lower) => (row[camel] !== undefined ? row[camel] : row[lower]);
-    const services = result.rows.map(r => ({
-      id: pick(r, 'id', 'id'),
-      categoryId: pick(r, 'categoryId', 'categoryid'),
-      title: pick(r, 'title', 'title'),
-      subtitle: pick(r, 'subtitle', 'subtitle'),
-      description: pick(r, 'description', 'description'),
-      price: pick(r, 'price', 'price'),
-      imageUrl: resolveServiceImageUrl(pick(r, 'title', 'title'), pick(r, 'imageUrl', 'imageurl')),
+    const services = await Service.find(filter);
+    const mappedServices = services.map(s => ({
+      id: s.id,
+      categoryId: s.categoryId,
+      title: s.title,
+      subtitle: s.subtitle,
+      description: s.description,
+      price: s.price,
+      imageUrl: resolveServiceImageUrl(s.title, s.imageUrl),
       provider: {
-        id: `p-${pick(r, 'id', 'id')}`,
-        name: pick(r, 'providerName', 'providername'),
-        avatarUrl: pick(r, 'providerAvatar', 'provideravatar'),
-        rating: pick(r, 'providerRating', 'providerrating'),
-        reviewCount: pick(r, 'providerReviewCount', 'providerreviewcount'),
-        isCertified: pick(r, 'providerCertified', 'providercertified')
+        id: s.providerId || `p-${s.id}`,
+        name: s.providerName,
+        avatarUrl: s.providerAvatar,
+        rating: s.providerRating,
+        reviewCount: s.providerReviewCount,
+        isCertified: s.providerCertified
       },
-      duration: pick(r, 'duration', 'duration'),
-      includes: pick(r, 'includes', 'includes'),
-      requirements: pick(r, 'requirements', 'requirements')
+      duration: s.duration,
+      includes: s.includes,
+      requirements: s.requirements
     }));
-    res.json({ data: services });
+    res.json({ data: mappedServices });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -363,30 +315,28 @@ app.get('/api/services', async (req, res) => {
 app.get('/api/services/:id', async (req, res) => {
   const id = req.params.id;
   try {
-    const result = await pool.query("SELECT * FROM services WHERE id = $1", [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: "Service not found" });
+    const s = await Service.findOne({ id });
+    if (!s) return res.status(404).json({ error: "Service not found" });
     
-    const row = result.rows[0];
-    const pick = (camel, lower) => (row[camel] !== undefined ? row[camel] : row[lower]);
     const service = {
-      id: pick('id', 'id'),
-      categoryId: pick('categoryId', 'categoryid'),
-      title: pick('title', 'title'),
-      subtitle: pick('subtitle', 'subtitle'),
-      description: pick('description', 'description'),
-      price: pick('price', 'price'),
-      imageUrl: resolveServiceImageUrl(pick('title', 'title'), pick('imageUrl', 'imageurl')),
+      id: s.id,
+      categoryId: s.categoryId,
+      title: s.title,
+      subtitle: s.subtitle,
+      description: s.description,
+      price: s.price,
+      imageUrl: resolveServiceImageUrl(s.title, s.imageUrl),
       provider: {
-        id: `p-${pick('id', 'id')}`,
-        name: pick('providerName', 'providername'),
-        avatarUrl: pick('providerAvatar', 'provideravatar'),
-        rating: pick('providerRating', 'providerrating'),
-        reviewCount: pick('providerReviewCount', 'providerreviewcount'),
-        isCertified: pick('providerCertified', 'providercertified')
+        id: s.providerId || `p-${s.id}`,
+        name: s.providerName,
+        avatarUrl: s.providerAvatar,
+        rating: s.providerRating,
+        reviewCount: s.providerReviewCount,
+        isCertified: s.providerCertified
       },
-      duration: pick('duration', 'duration'),
-      includes: pick('includes', 'includes'),
-      requirements: pick('requirements', 'requirements')
+      duration: s.duration,
+      includes: s.includes,
+      requirements: s.requirements
     };
     res.json({ data: service });
   } catch (err) {
@@ -400,11 +350,12 @@ app.get('/api/bookings/slots', async (req, res) => {
   if (!serviceId || !bookingDate) return res.status(400).json({ error: "Missing serviceId or bookingDate" });
 
   try {
-    const result = await pool.query(
-      "SELECT timeSlot FROM bookings WHERE serviceId = $1 AND bookingDate = $2 AND status != 'CANCELLED'",
-      [serviceId, bookingDate]
-    );
-    res.json({ success: true, bookedSlots: result.rows.map(r => r.timeslot || r.timeSlot) });
+    const bookings = await Booking.find({ 
+      serviceId, 
+      bookingDate, 
+      status: { $ne: 'CANCELLED' } 
+    });
+    res.json({ success: true, bookedSlots: bookings.map(b => b.timeSlot) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -419,22 +370,31 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const check = await pool.query(
-      "SELECT id FROM bookings WHERE serviceId = $1 AND bookingDate = $2 AND timeSlot = $3 AND status != 'CANCELLED'",
-      [serviceId, bookingDate, timeSlot]
-    );
+    const existingBooking = await Booking.findOne({
+      serviceId,
+      bookingDate,
+      timeSlot,
+      status: { $ne: 'CANCELLED' }
+    });
     
-    if (check.rows.length > 0) return res.status(409).json({ error: "This time slot has already been booked." });
+    if (existingBooking) return res.status(409).json({ error: "This time slot has already been booked." });
 
-    const result = await pool.query(
-      "INSERT INTO bookings (serviceId, userId, bookingDate, timeSlot, totalPrice, status, location) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
-      [serviceId, userId, bookingDate, timeSlot, totalPrice, 'PENDING', location || 'Not Specified']
-    );
+    const newBooking = new Booking({
+      serviceId,
+      userId,
+      bookingDate,
+      timeSlot,
+      totalPrice,
+      status: 'PENDING',
+      location: location || 'Not Specified'
+    });
+
+    await newBooking.save();
 
     res.json({
       success: true,
       data: {
-        bookingId: result.rows[0].id,
+        bookingId: newBooking._id,
         status: 'PENDING',
         message: 'Booking request sent.',
         date: bookingDate,
@@ -453,20 +413,27 @@ app.get('/api/bookings', authenticateToken, async (req, res) => {
   const appMode = req.query.mode || 'consumer';
   
   try {
-    const whereClause = appMode === 'provider' ? "s.providerId = $1" : "b.userId = $1";
-    
-    const result = await pool.query(`
-      SELECT b.*, s.title, s.providerName, s.imageUrl, s.price 
-      FROM bookings b
-      LEFT JOIN services s ON b.serviceId = s.id
-      WHERE ${whereClause}
-      ORDER BY b.createdAt DESC
-    `, [targetId]);
-    const data = result.rows.map((row) => {
-      const title = row.title;
-      const rawImg = row.imageUrl !== undefined ? row.imageUrl : row.imageurl;
-      return { ...row, imageUrl: resolveServiceImageUrl(title, rawImg) };
-    });
+    let bookings;
+    if (appMode === 'provider') {
+      const services = await Service.find({ providerId: targetId });
+      const serviceIds = services.map(s => s.id);
+      bookings = await Booking.find({ serviceId: { $in: serviceIds } }).sort({ createdAt: -1 });
+    } else {
+      bookings = await Booking.find({ userId: targetId }).sort({ createdAt: -1 });
+    }
+
+    const data = await Promise.all(bookings.map(async (b) => {
+      const s = await Service.findOne({ id: b.serviceId });
+      return {
+        ...b.toObject(),
+        id: b._id,
+        title: s ? s.title : 'Deleted Service',
+        providerName: s ? s.providerName : 'Unknown',
+        imageUrl: s ? resolveServiceImageUrl(s.title, s.imageUrl) : null,
+        price: s ? s.price : 0
+      };
+    }));
+
     res.json({ success: true, count: data.length, data });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -476,20 +443,23 @@ app.get('/api/bookings', authenticateToken, async (req, res) => {
 // API: Get Single Booking
 app.get('/api/bookings/:id', async (req, res) => {
   const { id } = req.params;
-  const numericId = /^\d+$/.test(id) ? parseInt(id, 10) : id;
   
   try {
-    const result = await pool.query(`
-      SELECT b.*, s.title, s.providerName, s.imageUrl, s.price 
-      FROM bookings b
-      LEFT JOIN services s ON b.serviceId = s.id
-      WHERE b.id = $1
-    `, [numericId]);
-    if (result.rows.length === 0) return res.status(404).json({ error: "Booking not found" });
-    const row = result.rows[0];
-    const title = row.title;
-    const rawImg = row.imageUrl !== undefined ? row.imageUrl : row.imageurl;
-    res.json({ success: true, data: { ...row, imageUrl: resolveServiceImageUrl(title, rawImg) } });
+    const b = await Booking.findById(id);
+    if (!b) return res.status(404).json({ error: "Booking not found" });
+    
+    const s = await Service.findOne({ id: b.serviceId });
+    res.json({ 
+      success: true, 
+      data: { 
+        ...b.toObject(),
+        id: b._id,
+        title: s ? s.title : 'Deleted Service',
+        providerName: s ? s.providerName : 'Unknown',
+        imageUrl: s ? resolveServiceImageUrl(s.title, s.imageUrl) : null,
+        price: s ? s.price : 0
+      } 
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -500,19 +470,24 @@ app.put('/api/bookings/:id/status', authenticateToken, async (req, res) => {
   const { status } = req.body;
   const userId = req.user.id;
 
-  const numericId = /^\d+$/.test(id) ? parseInt(id, 10) : id;
-
   try {
-    // Check if the user is either the provider of the service OR the consumer who made the booking
-    const checkQuery = "SELECT b.id FROM bookings b JOIN services s ON b.serviceId = s.id WHERE b.id = $1 AND (b.userId = $2 OR s.providerId = $2)";
-    
-    const check = await pool.query(checkQuery, [numericId, userId]);
-    if (check.rows.length === 0) return res.status(404).json({ error: "Booking not found or unauthorized" });
+    const booking = await Booking.findById(id);
+    if (!booking) return res.status(404).json({ error: "Booking not found" });
 
-    await pool.query("UPDATE bookings SET status = $1 WHERE id = $2", [status, numericId]);
+    const service = await Service.findOne({ id: booking.serviceId });
+    if (!service) return res.status(404).json({ error: "Linked service not found" });
+
+    // Check if the user is either the provider of the service OR the consumer who made the booking
+    if (booking.userId !== userId && service.providerId !== userId) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    booking.status = status;
+    await booking.save();
+    
     res.json({ success: true, message: `Booking marked as ${status}` });
   } catch (err) {
-    console.error(`Error updating booking ${numericId}:`, err.message);
+    console.error(`Error updating booking ${id}:`, err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -520,9 +495,6 @@ app.put('/api/bookings/:id/status', authenticateToken, async (req, res) => {
 // Cancel: backward compatibility for website
 app.put('/api/bookings/:id/cancel', async (req, res) => {
   let { id } = req.params;
-
-  // Try to parse ID as integer if it's numeric (common for SQLite/PG serials)
-  const numericId = /^\d+$/.test(id) ? parseInt(id, 10) : id;
 
   let userId = null;
   const authHeader = req.headers['authorization'];
@@ -541,65 +513,60 @@ app.put('/api/bookings/:id/cancel', async (req, res) => {
     if (!bodyUserId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const owner = await pool.query('SELECT userId FROM bookings WHERE id = $1', [numericId]);
-    if (owner.rows.length === 0) {
-      return res.status(404).json({ error: 'Booking not found or you don\'t have permission' });
-    }
-    const row = owner.rows[0];
-    const bookingUserId = row.userId ?? row.userid;
-    if (bookingUserId !== bodyUserId) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
     userId = bodyUserId;
   }
 
   try {
-    console.log(`Attempting to cancel booking. numericId: ${numericId}, userId: ${userId}, typeId: ${typeof numericId}`);
-    const result = await pool.query("UPDATE bookings SET status = 'CANCELLED' WHERE id = $1 AND userId = $2", [numericId, userId]);
-    
-    console.log('Query result:', JSON.stringify(result));
+    const booking = await Booking.findById(id);
+    if (!booking) return res.status(404).json({ error: "Booking not found" });
 
-    if (result.rowCount === 0) {
-      console.warn(`Cancellation failed: No row matched for id=${numericId} AND userId=${userId}`);
-      // Let's check if the booking even exists regardless of userId
-      const exists = await pool.query("SELECT id, userId, status FROM bookings WHERE id = $1", [numericId]);
-      console.log('Booking existence check:', JSON.stringify(exists.rows));
-      
-      return res.status(404).json({ 
-        error: "Booking not found or you don't have permission",
-        details: exists.rows.length > 0 ? `Owned by ${exists.rows[0].userId}` : "ID does not exist"
-      });
+    if (booking.userId !== userId) {
+      return res.status(403).json({ error: "Forbidden: You don't own this booking" });
     }
+
+    booking.status = 'CANCELLED';
+    await booking.save();
     
-    console.log(`Successfully cancelled booking: ${numericId}`);
     res.json({ success: true, message: "Booking cancelled successfully" });
   } catch (err) {
-    console.error(`Error cancelling booking ${numericId}:`, err.message);
+    console.error(`Error cancelling booking ${id}:`, err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
 // API: Create a new service (Providers only)
 app.post('/api/services', authenticateToken, async (req, res) => {
-
   const { title, categoryId, subtitle, description, price, imageUrl, duration, includes, requirements } = req.body;
   if (!title || !categoryId || !price) {
     return res.status(400).json({ error: "Missing required service details" });
   }
 
-  // Generate a simple ID
   const id = `s${Date.now()}`;
   const providerId = req.user.id;
   const providerName = req.user.fullname;
   const providerAvatar = req.user.avatar_url || '';
 
   try {
-    await pool.query(
-      `INSERT INTO services 
-      (id, categoryId, title, subtitle, description, price, imageUrl, providerName, providerAvatar, providerRating, providerReviewCount, providerCertified, providerId, duration, includes, requirements) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
-      [id, categoryId, title, subtitle || '', description || '', price, imageUrl || '', providerName, providerAvatar, 0.0, 0, false, providerId, duration || '1 Hour', includes || '', requirements || '']
-    );
+    const newService = new Service({
+      id,
+      categoryId,
+      title,
+      subtitle: subtitle || '',
+      description: description || '',
+      price,
+      imageUrl: imageUrl || '',
+      providerName,
+      providerAvatar,
+      providerRating: 0,
+      providerReviewCount: 0,
+      providerCertified: false,
+      providerId,
+      duration: duration || '1 Hour',
+      includes: includes || '',
+      requirements: requirements || ''
+    });
+
+    await newService.save();
 
     res.json({ success: true, message: "Service listed successfully", data: { id } });
   } catch (err) {
@@ -610,18 +577,28 @@ app.post('/api/services', authenticateToken, async (req, res) => {
 
 // API: Get Provider Earnings
 app.get('/api/provider/earnings', authenticateToken, async (req, res) => {
-
   const providerId = req.user.id;
   try {
-    const result = await pool.query(`
-      SELECT b.id, b.totalPrice as totalprice, b.status, b.bookingDate as bookingdate, s.title 
-      FROM bookings b 
-      JOIN services s ON b.serviceId = s.id 
-      WHERE s.providerId = $1 AND b.status = 'COMPLETED'
-    `, [providerId]);
+    const services = await Service.find({ providerId });
+    const serviceIds = services.map(s => s.id);
+    
+    const bookings = await Booking.find({ 
+      serviceId: { $in: serviceIds }, 
+      status: 'COMPLETED' 
+    });
 
-    const bookings = result.rows;
-    const totalEarned = bookings.reduce((sum, b) => sum + (b.totalprice || 0), 0);
+    // We need to match titles manually since we don't have SQL Joins
+    const detailedBookings = bookings.map(b => {
+      const s = services.find(serv => serv.id === b.serviceId);
+      return {
+        id: b._id,
+        title: s ? s.title : 'Deleted Service',
+        amount: b.totalPrice,
+        date: b.bookingDate
+      };
+    });
+
+    const totalEarned = detailedBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
     const platformFee = totalEarned * 0.10; // 10% fee
     const tax = totalEarned * 0.05; // 5% tax
     const netEarnings = totalEarned - platformFee - tax;
@@ -633,12 +610,7 @@ app.get('/api/provider/earnings', authenticateToken, async (req, res) => {
         platformFee,
         tax,
         netEarnings,
-        bookings: bookings.map(b => ({
-          id: b.id,
-          title: b.title,
-          amount: b.totalprice,
-          date: b.bookingdate
-        }))
+        bookings: detailedBookings
       } 
     });
   } catch (err) {
@@ -649,32 +621,29 @@ app.get('/api/provider/earnings', authenticateToken, async (req, res) => {
 // API: Get services listed by the logged-in provider
 app.get('/api/provider/services', authenticateToken, async (req, res) => {
   const providerId = req.user.id;
-  console.log('Fetching services for providerId:', providerId);
   try {
-    const result = await pool.query("SELECT * FROM services WHERE LOWER(providerId) = LOWER($1)", [providerId]);
-    console.log(`Found ${result.rows.length} services for provider ${providerId}`);
-    const pick = (row, camel, lower) => (row[camel] !== undefined ? row[camel] : row[lower]);
-    const services = result.rows.map(r => ({
-      id: pick(r, 'id', 'id'),
-      categoryId: pick(r, 'categoryId', 'categoryid'),
-      title: pick(r, 'title', 'title'),
-      subtitle: pick(r, 'subtitle', 'subtitle'),
-      description: pick(r, 'description', 'description'),
-      price: pick(r, 'price', 'price'),
-      imageUrl: resolveServiceImageUrl(pick(r, 'title', 'title'), pick(r, 'imageUrl', 'imageurl')),
+    const services = await Service.find({ providerId });
+    const mappedServices = services.map(s => ({
+      id: s.id,
+      categoryId: s.categoryId,
+      title: s.title,
+      subtitle: s.subtitle,
+      description: s.description,
+      price: s.price,
+      imageUrl: resolveServiceImageUrl(s.title, s.imageUrl),
       provider: {
         id: providerId,
-        name: pick(r, 'providerName', 'providername'),
-        avatarUrl: pick(r, 'providerAvatar', 'provideravatar'),
-        rating: pick(r, 'providerRating', 'providerrating'),
-        reviewCount: pick(r, 'providerReviewCount', 'providerreviewcount'),
-        isCertified: pick(r, 'providerCertified', 'providercertified')
+        name: s.providerName,
+        avatarUrl: s.providerAvatar,
+        rating: s.providerRating,
+        reviewCount: s.providerReviewCount,
+        isCertified: s.providerCertified
       },
-      duration: pick(r, 'duration', 'duration'),
-      includes: pick(r, 'includes', 'includes'),
-      requirements: pick(r, 'requirements', 'requirements')
+      duration: s.duration,
+      includes: s.includes,
+      requirements: s.requirements
     }));
-    res.json({ success: true, data: services });
+    res.json({ success: true, data: mappedServices });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -687,21 +656,24 @@ app.put('/api/services/:id', authenticateToken, async (req, res) => {
   const { title, categoryId, subtitle, description, price, imageUrl, duration, includes, requirements } = req.body;
 
   try {
-    const check = await pool.query("SELECT providerId FROM services WHERE id = $1", [id]);
-    if (check.rows.length === 0) return res.status(404).json({ error: "Service not found" });
+    const service = await Service.findOne({ id });
+    if (!service) return res.status(404).json({ error: "Service not found" });
     
-    const serviceOwnerId = check.rows[0].providerId || check.rows[0].providerid;
-    if (serviceOwnerId !== providerId) {
+    if (service.providerId !== providerId) {
       return res.status(403).json({ error: "Unauthorized: You do not own this service" });
     }
 
-    await pool.query(
-      `UPDATE services SET 
-        title = $1, categoryId = $2, subtitle = $3, description = $4, 
-        price = $5, imageUrl = $6, duration = $7, includes = $8, requirements = $9 
-      WHERE id = $10`,
-      [title, categoryId, subtitle, description, price, imageUrl, duration, includes, requirements, id]
-    );
+    service.title = title;
+    service.categoryId = categoryId;
+    service.subtitle = subtitle;
+    service.description = description;
+    service.price = price;
+    service.imageUrl = imageUrl;
+    service.duration = duration;
+    service.includes = includes;
+    service.requirements = requirements;
+
+    await service.save();
 
     res.json({ success: true, message: "Service updated successfully" });
   } catch (err) {
@@ -715,15 +687,14 @@ app.delete('/api/services/:id', authenticateToken, async (req, res) => {
   const providerId = req.user.id;
 
   try {
-    const check = await pool.query("SELECT providerId FROM services WHERE id = $1", [id]);
-    if (check.rows.length === 0) return res.status(404).json({ error: "Service not found" });
+    const service = await Service.findOne({ id });
+    if (!service) return res.status(404).json({ error: "Service not found" });
 
-    const serviceOwnerId = check.rows[0].providerId || check.rows[0].providerid;
-    if (serviceOwnerId !== providerId) {
+    if (service.providerId !== providerId) {
       return res.status(403).json({ error: "Unauthorized: You do not own this service" });
     }
 
-    await pool.query("DELETE FROM services WHERE id = $1", [id]);
+    await Service.deleteOne({ id });
     res.json({ success: true, message: "Service deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });

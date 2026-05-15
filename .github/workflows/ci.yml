@@ -1,0 +1,43 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: './backend/package-lock.json'
+
+    - name: Install Backend Dependencies
+      run: |
+        cd backend
+        npm ci
+
+    - name: Install Frontend Dependencies
+      run: |
+        cd website
+        npm ci
+
+    - name: Build Frontend
+      run: |
+        cd website
+        npm run build
+
+    - name: Build Docker Image (Test)
+      run: docker build -t locser-app .
+
+  # You can add a deployment job here if using a specific provider like Heroku, AWS, or Railway.
+  # For Render, deployment is automatic when you link your GitHub repo.

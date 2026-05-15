@@ -1,18 +1,20 @@
 # -------------------------------
-# Multi‑stage Dockerfile
+# Multi-stage Dockerfile
 # -------------------------------
-# 1️⃣ Build stage – compile the React/Vite front‑end
+
+# 1. Build stage - compile the React/Vite front-end
 FROM node:20 AS builder
 WORKDIR /app
 
-# Copy only front‑end package manifests first (caches layer)
+# Copy website package files and install ALL deps (including devDeps like vite)
 COPY website/package*.json ./website/
-RUN cd website && npm ci --omit=dev --ignore-optional
+RUN cd website && npm install
 
-# Copy pre‑built UI assets (must exist locally as website/dist)
-COPY website/dist ./website/dist
+# Copy website source and build
+COPY website/ ./website/
+RUN cd website && npm run build
 
-# 2️⃣ Runtime stage – run the Express API and serve the built UI
+# 2. Runtime stage - run the Express API and serve the built UI
 FROM node:20-slim AS runtime
 WORKDIR /app
 
@@ -23,11 +25,12 @@ RUN npm ci --omit=dev --ignore-optional
 # Copy backend source files
 COPY backend/ ./
 
-# Copy the compiled front‑end from the builder stage
+# Copy the compiled front-end from the builder stage
+# (server.js is configured to serve from ./website/dist)
 COPY --from=builder /app/website/dist ./website/dist
 
-# Expose the API port (default 3000 in server.js)
+# Expose the API port
 EXPOSE 3000
 
-# Default command – start the API server (which now also serves the UI)
+# Start the API server
 CMD ["node", "server.js"]
