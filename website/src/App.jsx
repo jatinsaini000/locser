@@ -12,11 +12,24 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Earnings from './pages/Earnings';
 import { AuthProvider } from './context/AuthContext';
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
