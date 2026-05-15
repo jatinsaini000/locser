@@ -4,6 +4,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { formatPrice } from '../utils/currency';
 import { useAuth } from '../context/AuthContext';
+import StatusTimeline from '../components/StatusTimeline';
 
 export default function Bookings() {
   const { user, appMode, loading: authLoading } = useAuth();
@@ -202,6 +203,11 @@ export default function Bookings() {
               <div className="mb-8">
                 <h3 className="text-3xl font-black text-slate-900 dark:text-white leading-tight tracking-tighter">{selectedBooking.title}</h3>
                 <p className="text-blue-600 font-bold text-sm mt-1">{selectedBooking.providerName}</p>
+              </div>
+
+              {/* Status Timeline */}
+              <div className="mb-8">
+                <StatusTimeline currentStatus={selectedBooking.status} />
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-8">

@@ -16,7 +16,14 @@ const ServiceSchema = new mongoose.Schema({
   providerId: { type: String }, // Links to User._id or custom providerId
   duration: { type: String, default: '1 Hour' },
   includes: { type: String },
-  requirements: { type: String }
+  requirements: { type: String },
+  location: {
+    type: { type: String, default: 'Point' },
+    coordinates: { type: [Number], default: [76.7794, 30.7333] } // Default to Chandigarh
+  }
 }, { timestamps: true });
+
+ServiceSchema.index({ location: '2dsphere' });
+ServiceSchema.index({ title: 'text', description: 'text', providerName: 'text' });
 
 module.exports = mongoose.model('Service', ServiceSchema);

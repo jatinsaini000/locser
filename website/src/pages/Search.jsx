@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, SlidersHorizontal, Search as SearchIcon, ChevronDown, History, X, Star } from 'lucide-react';
+import { ArrowLeft, SlidersHorizontal, Search as SearchIcon, ChevronDown, History, X, Star, MapPin } from 'lucide-react';
 import api from '../api';
 import { formatPrice } from '../utils/currency';
 
@@ -11,32 +11,55 @@ export default function Search() {
   const [results, setResults] = useState([]);
   const [recentSearches, setRecentSearches] = useState(['Emergency Plumber', 'House Cleaning']);
 
+  const [nearMe, setNearMe] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+
   useEffect(() => {
     api.get('/categories')
       .then(res => setCategories(res.data?.data || []))
       .catch(console.error);
   }, []);
 
+  const fetchServices = () => {
+    let url = `/services?query=${query}`;
+    if (nearMe && userLocation) {
+      url += `&lat=${userLocation.lat}&lng=${userLocation.lng}&radius=50000`; // 50km
+    }
+
+    api.get(url)
+      .then(res => setResults(res.data?.data || []))
+      .catch(console.error);
+  };
+
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      // First try fetching all services
-      api.get('/services')
-        .then(res => {
-          let allServices = res.data?.data || [];
-          if (query) {
-             const lowerQuery = query.toLowerCase();
-             allServices = allServices.filter(s => 
-               s.title?.toLowerCase().includes(lowerQuery) || 
-               s.description?.toLowerCase().includes(lowerQuery)
-             );
-          }
-          setResults(allServices);
-        })
-        .catch(console.error);
+      fetchServices();
     }, 300);
     
     return () => clearTimeout(delayDebounceFn);
-  }, [query]);
+  }, [query, nearMe, userLocation]);
+
+  const toggleNearMe = () => {
+    if (!nearMe) {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          setNearMe(true);
+        }, (error) => {
+          console.error("Error getting location:", error);
+          alert("Could not get your location. Please check browser permissions.");
+        });
+      } else {
+        alert("Geolocation is not supported by your browser.");
+      }
+    } else {
+      setNearMe(false);
+      setUserLocation(null);
+    }
+  };
 
   const handleRecentSearchClick = (searchItem) => {
     setQuery(searchItem);
@@ -85,9 +108,17 @@ export default function Search() {
             <span className="text-slate-700 dark:text-slate-300 text-sm font-medium">Rating: 4.5+</span>
             <ChevronDown className="w-4 h-4 text-slate-700 dark:text-slate-400" />
           </button>
-          <button className="flex items-center gap-1 bg-slate-200 dark:bg-slate-800 px-4 py-2 rounded-full h-9 justify-center min-w-max border border-transparent dark:border-slate-700 transition-colors">
-            <span className="text-slate-700 dark:text-slate-300 text-sm font-medium">Distance</span>
-            <ChevronDown className="w-4 h-4 text-slate-700 dark:text-slate-400" />
+          <button 
+            onClick={toggleNearMe}
+            className={`flex items-center gap-1 px-4 py-2 rounded-full h-9 justify-center min-w-max border transition-all ${
+              nearMe 
+                ? 'bg-blue-600 border-blue-600 text-white' 
+                : 'bg-slate-200 dark:bg-slate-800 border-transparent dark:border-slate-700 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            <MapPin className={`w-4 h-4 ${nearMe ? 'text-white' : 'text-slate-700 dark:text-slate-400'}`} />
+            <span className="text-sm font-medium">{nearMe ? 'Near Me' : 'Distance'}</span>
+            <ChevronDown className={`w-4 h-4 ${nearMe ? 'text-white' : 'text-slate-700 dark:text-slate-400'}`} />
           </button>
         </div>
 

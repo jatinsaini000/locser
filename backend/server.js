@@ -267,7 +267,7 @@ app.get('/api/profile', async (req, res) => {
 
 // API: Get All Services
 app.get('/api/services', async (req, res) => {
-  const { categoryId, query: searchQuery } = req.query;
+  const { categoryId, query: searchQuery, lat, lng, radius } = req.query;
   
   let filter = {};
   
@@ -281,6 +281,23 @@ app.get('/api/services', async (req, res) => {
       { description: { $regex: searchQuery, $options: 'i' } },
       { providerName: { $regex: searchQuery, $options: 'i' } }
     ];
+  }
+
+  // Geospatial Search
+  if (lat && lng) {
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lng);
+    const maxDistance = parseFloat(radius) || 50000; // Default 50km
+
+    filter.location = {
+      $near: {
+        $geometry: {
+          type: "Point",
+          coordinates: [longitude, latitude]
+        },
+        $maxDistance: maxDistance
+      }
+    };
   }
 
   try {
