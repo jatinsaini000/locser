@@ -114,7 +114,7 @@ function ServiceCard({ service, onPress }: { service: Service, onPress: () => vo
           <Image source={{ uri: service.imageUrl }} className="w-full h-full" resizeMode="cover" />
           <View className="absolute top-3 right-3 bg-white/90 py-1 px-2 rounded-lg flex-row items-center gap-1 shadow-sm">
             <MaterialIcons name="star" size={14} color="#eab308" />
-            <Text className="text-xs font-bold text-slate-900">{service.provider.rating.toFixed(1)}</Text>
+            <Text className="text-xs font-bold text-slate-900">{(service.provider.rating || 0).toFixed(1)}</Text>
           </View>
         </View>
       </TouchableOpacity>

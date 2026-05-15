@@ -131,7 +131,7 @@ export default function ServiceDetailsScreen() {
           <View className="items-end pl-2">
             <View className="flex-row items-center gap-1">
               <MaterialIcons name="star" size={16} color="#fbbf24" />
-              <Text className="text-slate-900 text-base font-bold leading-normal">{service.provider.rating.toFixed(1)}</Text>
+              <Text className="text-slate-900 text-base font-bold leading-normal">{(service.provider.rating || 0).toFixed(1)}</Text>
             </View>
             <Text className="text-slate-500 text-xs mt-1">{service.provider.reviewCount} reviews</Text>
           </View>

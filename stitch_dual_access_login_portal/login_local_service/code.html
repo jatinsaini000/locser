@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login - Local Service</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "surface": "#faf8ff",
+                    "outline-variant": "#c3c6d7",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed": "#d3e4fe",
+                    "tertiary-fixed": "#dfe3e7",
+                    "tertiary-fixed-dim": "#c3c7cb",
+                    "surface-container-low": "#f2f3ff",
+                    "on-tertiary": "#ffffff",
+                    "outline": "#737686",
+                    "primary": "#004ac6",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "tertiary": "#515659",
+                    "primary-fixed": "#dbe1ff",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "surface-variant": "#dae2fd",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#283044",
+                    "on-tertiary-fixed": "#171c1f",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "surface-container-highest": "#dae2fd",
+                    "on-primary": "#ffffff",
+                    "on-secondary-fixed": "#0b1c30",
+                    "on-error": "#ffffff",
+                    "on-secondary-container": "#54647a",
+                    "secondary-container": "#d0e1fb",
+                    "on-background": "#131b2e",
+                    "on-primary-container": "#eeefff",
+                    "on-primary-fixed": "#00174b",
+                    "secondary": "#505f76",
+                    "inverse-on-surface": "#eef0ff",
+                    "surface-bright": "#faf8ff",
+                    "on-surface-variant": "#434655",
+                    "tertiary-container": "#696e71",
+                    "on-surface": "#131b2e",
+                    "on-tertiary-container": "#edf1f5",
+                    "primary-container": "#2563eb",
+                    "surface-container-high": "#e2e7ff",
+                    "surface-dim": "#d2d9f4",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "surface-tint": "#0053db",
+                    "error-container": "#ffdad6",
+                    "background": "#faf8ff",
+                    "on-tertiary-fixed-variant": "#43474b",
+                    "inverse-primary": "#b4c5ff",
+                    "surface-container": "#eaedff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "lg": "24px",
+                    "gutter": "24px",
+                    "sm": "12px",
+                    "margin-mobile": "16px",
+                    "margin-desktop": "40px",
+                    "xs": "8px",
+                    "md": "16px",
+                    "2xl": "48px",
+                    "base": "4px",
+                    "xl": "32px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Plus Jakarta Sans"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "label-sm": ["Plus Jakarta Sans"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "headline-sm": ["Plus Jakarta Sans"],
+                    "label-md": ["Plus Jakarta Sans"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "60px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .login-shadow {
+            box-shadow: 0px 12px 32px rgba(15, 23, 42, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface-container-low docked full-width top-0 z-50">
+<div class="flex justify-between items-center w-full px-margin-desktop py-md max-w-7xl mx-auto">
+<div class="font-display-lg text-headline-md font-bold text-primary dark:text-primary-fixed">Local Service</div>
+<nav class="hidden md:flex gap-lg items-center">
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">How it Works</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">Services</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">Help</a>
+<button class="bg-primary text-on-primary px-lg py-sm rounded-full font-label-md text-label-md font-bold transition-opacity hover:opacity-90">Sign Up</button>
+</nav>
+<div class="md:hidden">
+<span class="material-symbols-outlined text-on-surface">menu</span>
+</div>
+</div>
+</header>
+<main class="flex-grow flex items-center justify-center py-2xl px-margin-mobile">
+<div class="w-full max-w-5xl grid md:grid-cols-2 gap-xl items-center">
+<!-- Left Side: Visual/Context -->
+<div class="hidden md:flex flex-col gap-lg pr-xl">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Experience Reliability and Professional Expertise.</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Connect with the best local service providers in your neighborhood. From plumbing to tech support, we've got you covered.</p>
+<div class="relative w-full h-80 rounded-xl overflow-hidden login-shadow">
+<img alt="Local Professional Service" class="w-full h-full object-cover" data-alt="A professional house cleaner wearing white gloves and a protective mask meticulously cleaning a window in a bright, modern living room. The scene is bathed in natural sunlight, emphasizing a clean and healthy environment. The overall aesthetic is professional, reliable, and uses a high-key lighting style to match the modern corporate design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBV5xcfHxvfk9xc0Lo-qgwtvxcaBpCulIMsUhPcZes7fbzpJ1jVbvSGUZWx3AWzmS53theTGQSDNghRoRjfCSzey3Z1sd-d7FO9dvN1UdtSdMvusmIt7tvaLazQrjqMg3smD0A4P_818s4XOM46NUjhe54NSqoPwOYoCv92wngwN7wJu_tVRBCRILfZYrtU9WPXLgHve8sL2adethhVmdaABDzWAt47206NDD8I_FJihIXJEYaO4Um0T8lbJ-oxXYAWap1cQ9enpQY"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-lg">
+<p class="text-white font-label-md text-label-md">Trusted by over 10,000+ local residents.</p>
+</div>
+</div>
+</div>
+<!-- Right Side: Login Form -->
+<div class="bg-surface-container-lowest p-xl rounded-xl login-shadow border border-outline-variant/30">
+<div class="mb-xl">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Welcome Back</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Choose your account type to continue.</p>
+</div>
+<!-- Account Type Selector -->
+<div class="grid grid-cols-2 gap-md mb-xl p-base bg-surface-container-low rounded-xl">
+<button class="flex items-center justify-center gap-xs py-md px-sm rounded-lg bg-primary text-on-primary font-label-md text-label-md font-bold transition-all">
+<span class="material-symbols-outlined text-[20px]">person</span>
+                        Consumer
+                    </button>
+<button class="flex items-center justify-center gap-xs py-md px-sm rounded-lg text-on-surface-variant font-label-md text-label-md font-medium hover:bg-surface-variant transition-all">
+<span class="material-symbols-outlined text-[20px]">engineering</span>
+                        Service Provider
+                    </button>
+</div>
+<!-- Login Form -->
+<form class="flex flex-col gap-lg">
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface" for="email">Email Address</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant">mail</span>
+<input class="w-full pl-xl pr-md py-md bg-surface-container-low border-transparent rounded-xl focus:border-primary focus:ring-0 transition-all font-body-md text-body-md" id="email" placeholder="name@example.com" type="email"/>
+</div>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface" for="password">Password</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant">lock</span>
+<input class="w-full pl-xl pr-md py-md bg-surface-container-low border-transparent rounded-xl focus:border-primary focus:ring-0 transition-all font-body-md text-body-md" id="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-md top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<label class="flex items-center gap-xs cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface transition-colors">Remember Me</span>
+</label>
+<a class="font-label-md text-label-md text-primary hover:underline" href="#">Forgot Password?</a>
+</div>
+<button class="w-full bg-primary text-on-primary py-xl rounded-full font-headline-sm text-headline-sm font-bold shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]" type="submit">
+                        Login
+                    </button>
+<div class="relative py-md">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-outline-variant"></div>
+</div>
+<div class="relative flex justify-center">
+<span class="bg-surface-container-lowest px-md font-label-sm text-label-sm text-on-surface-variant">OR CONTINUE WITH</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<button class="flex items-center justify-center gap-sm py-md border border-outline-variant rounded-xl hover:bg-surface-container-low transition-colors font-label-md text-label-md" type="button">
+<img alt="Google" class="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIoeFCfJOtuLbpZEIKohvj0wXZte1spyTTNPkptM3xDYLaxeNIv1pgUZiqb9nf0zy5aCtZrjm6Voh4I_7S8xicG9CKubcUX4w9OSifP9SfEDx8Y2i6ezgDKKn74HGbBshvyOxw9bGAtJvYtmmc5SN5UXnlnwPPrge55gfZKybhgj5rLK37-zYLwK9xXW6VVdb_FqqgXiIC6kkiXr-yjLKKThOX3QLqd7voKKZ6R-Gmt9_X8rKwVDY5uZ45hLDSjY5S9ucTVQug1_M"/>
+                            Google
+                        </button>
+<button class="flex items-center justify-center gap-sm py-md border border-outline-variant rounded-xl hover:bg-surface-container-low transition-colors font-label-md text-label-md" type="button">
+<img alt="Apple" class="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXTiqTRGZF7Pydky2Bl-x0AzamgXKApwMTl3xXTj-Xf6dw5SH8rSMelOvDwXuc6DHstISnvqEv25x6EPRH6SHJRzQ25QVeVWconMzoV08u1P6WWZiRmtFSFvAXz4kO3L5M1tCJrQeZqshJn-a4--w9A5sowR15e0buBieZGGtyuVv-3IrDwvUHU1cyNKHIhcBor7F23eoV-N6v78vTdR-tb0F2-GCnL37QFREeTWWWAi7Mbh9xYtGtDNkfxnALjej2bQ4-y-Lm5Os"/>
+                            Apple
+                        </button>
+</div>
+<p class="text-center font-body-md text-body-md text-on-surface-variant mt-md">
+                        New to Local Service? <a class="text-primary font-bold hover:underline" href="#">Sign up now</a>
+</p>
+</form>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant dark:border-outline mt-auto">
+<div class="w-full py-xl px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-md max-w-7xl mx-auto">
+<div class="font-headline-sm text-headline-sm text-on-surface dark:text-inverse-on-surface">Local Service</div>
+<div class="flex gap-lg flex-wrap justify-center">
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:underline hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:underline hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:underline hover:text-primary transition-colors" href="#">Contact Support</a>
+</div>
+<div class="font-label-sm text-label-sm text-secondary dark:text-secondary-fixed opacity-70">
+                © 2024 Local Service. All rights reserved.
+            </div>
+</div>
+</footer>
+</body></html>

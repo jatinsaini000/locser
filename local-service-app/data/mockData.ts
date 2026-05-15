@@ -96,7 +96,7 @@ export const MOCK_SERVICES: Service[] = [
     subtitle: 'by AquaTech Services',
     description: '24/7 service for leaks, clogs, and pipe bursts. Fast, reliable, and professional repairs with a 1-year guarantee on all parts and labor.',
     price: 85,
-    imageUrl: 'https://images.unsplash.com/photo-1607472586893-edb57cb8be94?q=80&w=2574&auto=format&fit=crop',
+    imageUrl: 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?q=80&w=1200&auto=format&fit=crop',
     provider: {
       id: 'p4',
       name: 'Mike Johnson',
@@ -130,7 +130,7 @@ export const MOCK_SERVICES: Service[] = [
     subtitle: 'by Green Thumb Landscaping',
     description: 'Complete lawn maintenance including mowing, edging, weed control, and seasonal fertilizing for a perfectly green yard.',
     price: 45,
-    imageUrl: 'https://images.unsplash.com/photo-1558904541-efa843a96f0f?q=80&w=2670&auto=format&fit=crop',
+    imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=1200&auto=format&fit=crop',
     provider: {
       id: 'p6',
       name: 'Robert Davis',

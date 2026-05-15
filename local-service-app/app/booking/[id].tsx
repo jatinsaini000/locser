@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 
@@ -8,7 +8,7 @@ import { API_URL } from '../../constants/Api';
 type Booking = {
   id: number;
   serviceId: string;
-  userId: string;
+  userId?: string;
   bookingDate: string;
   timeSlot: string;
   totalPrice: number;
@@ -59,21 +59,40 @@ export default function BookingDetailsScreen() {
   const extraFees = (booking.totalPrice - (booking.price || 0));
   const taxesString = extraFees > 0 ? extraFees.toFixed(2) : '0.00';
 
-  const handleCancelBooking = async () => {
-    try {
-      const res = await fetch(`${API_URL}/bookings/${booking.id}/cancel`, {
-        method: 'PUT'
-      });
-      const data = await res.json();
-      if (data.success) {
-        setBooking({ ...booking, status: 'CANCELLED' });
-      } else {
-        alert("Failed to cancel booking: " + data.error);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("An error occurred while cancelling.");
-    }
+  const handleCancelBooking = () => {
+    Alert.alert('Cancel booking', 'Are you sure you want to cancel this booking?', [
+      { text: 'No', style: 'cancel' },
+      {
+        text: 'Yes, cancel',
+        style: 'destructive',
+        onPress: async () => {
+          if (!booking.userId) {
+            Alert.alert('Error', 'Unable to verify this booking. Please open your account on the web app to cancel.');
+            return;
+          }
+          try {
+            const res = await fetch(`${API_URL}/bookings/${booking.id}/cancel`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: booking.userId }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.success) {
+              setBooking({ ...booking, status: 'CANCELLED' });
+              Alert.alert('Cancelled', 'Your booking has been cancelled.');
+            } else {
+              Alert.alert(
+                'Could not cancel',
+                typeof data.error === 'string' ? data.error : 'Please try again later.'
+              );
+            }
+          } catch (err) {
+            console.error(err);
+            Alert.alert('Error', 'An error occurred while cancelling.');
+          }
+        },
+      },
+    ]);
   };
 
   return (

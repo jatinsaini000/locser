@@ -2,22 +2,29 @@ const sqlite3 = require('sqlite3').verbose();
 const { Client } = require('pg');
 require('dotenv').config();
 
-// REPLACE THIS with your actual connection string or set it in your environment
-const supabaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:[YOUR-PASSWORD]@db.ihnchqsimkajzaqkirds.supabase.co:5432/postgres';
+const databaseUrl = process.env.DATABASE_URL;
+const dbSslEnabled = process.env.DB_SSL
+  ? process.env.DB_SSL === 'true'
+  : process.env.NODE_ENV === 'production';
+
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL is required to run migration.');
+}
 
 const sqliteDb = new sqlite3.Database('./database.sqlite');
 const pgClient = new Client({
-  connectionString: supabaseUrl,
+  connectionString: databaseUrl,
+  ssl: dbSslEnabled ? { rejectUnauthorized: false } : false
 });
 
 async function migrate() {
   try {
-    console.log('Connecting to Supabase...');
+    console.log('Connecting to PostgreSQL...');
     await pgClient.connect();
-    console.log('Connected to Supabase!');
+    console.log('Connected to PostgreSQL!');
 
     // 1. Create Tables
-    console.log('Creating tables in Supabase...');
+    console.log('Creating tables in PostgreSQL...');
     await pgClient.query(`
       CREATE TABLE IF NOT EXISTS services (
         id TEXT PRIMARY KEY,
@@ -31,7 +38,8 @@ async function migrate() {
         providerAvatar TEXT,
         providerRating REAL,
         providerReviewCount INTEGER,
-        providerCertified BOOLEAN
+        providerCertified BOOLEAN,
+        providerId TEXT
       );
 
       CREATE TABLE IF NOT EXISTS bookings (
