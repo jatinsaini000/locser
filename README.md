@@ -1,5 +1,7 @@
 # 🛠️ Locser: Local Professional Services Marketplace
 
+**🚀 Live Demo:** [https://locser.onrender.com/](https://locser.onrender.com/)
+
 **Locser** is a full-stack marketplace platform designed to connect consumers with local professional service providers. Whether it's plumbing, cleaning, or tutoring, Locser makes it easy to find, book, and communicate with top-rated professionals in your area.
 
 ---
